@@ -1,228 +1,120 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Core elements
     const scene = document.querySelector('a-scene');
     const loadingScreen = document.getElementById('loading-screen');
-    const loadingProgress = document.getElementById('loading-progress');
-    const startAudioButton = document.getElementById('start-audio');
-    const volumeSlider = document.getElementById('volume-slider');
+    const audioControl = document.getElementById('audio-control');
     const audioElement = document.getElementById('background-audio');
-    const clickSound = document.getElementById('click-sound');
-    const idol = document.getElementById('idol');
-    const particles = document.getElementById('particles');
-    
-    // State variables
+    const audioIcon = audioControl.querySelector('.material-icons');
     let audioPlaying = false;
-    let modelLoaded = false;
-    let audioLoaded = false;
     
-    // Initialize
-    initApp();
-    
-    function initApp() {
-        setupLoading();
-        setupAudio();
-        setupModelInteraction();
-        setupDeviceSpecificAdjustments();
-    }
-    
-    // Loading management
-    function setupLoading() {
-        // Track asset loading
-        const assetItems = document.querySelectorAll('a-asset-item, img, audio');
-        let loadedItems = 0;
-        
-        assetItems.forEach(item => {
-            if (item.tagName === 'AUDIO') {
-                item.addEventListener('canplaythrough', itemLoaded, { once: true });
-            } else {
-                item.addEventListener('loaded', itemLoaded, { once: true });
-            }
-        });
-        
-        function itemLoaded() {
-            loadedItems++;
-            const progress = Math.floor((loadedItems / assetItems.length) * 100);
-            loadingProgress.textContent = `${progress}%`;
-        }
-        
-        // Scene loaded handler
-        scene.addEventListener('loaded', function() {
-            console.log("Scene loaded successfully");
+    // Handle loading
+    scene.addEventListener('loaded', function() {
+        setTimeout(() => {
+            loadingScreen.style.opacity = 0;
             setTimeout(() => {
-                loadingScreen.style.opacity = 0;
-                setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                }, 800);
-                showNotification("Experience loaded successfully. Tap the Saraswati idol to interact!");
-            }, 1000);
-        });
-        
-        // Handle loading errors
-        scene.addEventListener('model-error', function(evt) {
-            console.error("Error loading model:", evt.detail);
-            showError("Failed to load 3D model. Please refresh the page.");
-        });
-    }
+                loadingScreen.style.display = 'none';
+            }, 700);
+        }, 1500);
+    });
     
-    // Audio setup and controls
-    function setupAudio() {
-        // Set initial volume
-        audioElement.volume = volumeSlider.value;
-        
-        // Volume control
-        volumeSlider.addEventListener('input', function() {
-            audioElement.volume = this.value;
-        });
-        
-        // Play/Pause button
-        startAudioButton.addEventListener('click', function() {
-            toggleAudio();
-        });
-        
-        // Audio loaded check
-        audioElement.addEventListener('canplaythrough', function() {
-            audioLoaded = true;
-            console.log("Audio loaded successfully");
-        });
-        
-        // Audio error handling
-        audioElement.addEventListener('error', function(e) {
-            console.error("Audio error:", e);
-            showError("Failed to load audio. The experience will continue without sound.");
-            startAudioButton.disabled = true;
-        });
-    }
+    // Audio controls
+    audioControl.addEventListener('click', function() {
+        if (!audioPlaying) {
+            audioElement.play();
+            audioIcon.textContent = 'pause';
+            audioControl.innerHTML = '<span class="material-icons">pause</span> Pause Mantra';
+            audioPlaying = true;
+        } else {
+            audioElement.pause();
+            audioIcon.textContent = 'play_arrow';
+            audioControl.innerHTML = '<span class="material-icons">play_arrow</span> Play Mantra';
+            audioPlaying = false;
+        }
+    });
     
-    // Toggle audio playback
-    function toggleAudio() {
-        try {
+    // Make idol model interactive
+    scene.addEventListener('loaded', () => {
+        const idolModel = document.querySelector('[gltf-model]');
+        
+        idolModel.addEventListener('click', function(evt) {
+            // Create pulse animation
+            this.setAttribute('animation__pulse', {
+                property: 'scale',
+                from: '1 1 1',
+                to: '1.1 1.1 1.1',
+                dur: 300,
+                easing: 'easeOutQuad',
+                dir: 'alternate',
+                loop: 1
+            });
+            
+            // Play audio if not already playing
             if (!audioPlaying) {
-                const playPromise = audioElement.play();
-                
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        audioPlaying = true;
-                        startAudioButton.textContent = 'Pause Audio';
-                        startAudioButton.classList.add('active');
-                    }).catch(error => {
-                        console.error("Audio play error:", error);
-                        showError("Couldn't play audio. Try clicking the play button again.");
-                    });
-                }
-            } else {
-                audioElement.pause();
-                startAudioButton.textContent = 'Play Audio';
-                startAudioButton.classList.remove('active');
-                audioPlaying = false;
-            }
-        } catch(err) {
-            console.error("Audio toggle error:", err);
-        }
-    }
-    
-    // Model interaction setup
-    function setupModelInteraction() {
-        scene.addEventListener('loaded', () => {
-            if (idol) {
-                modelLoaded = true;
-                console.log("Model loaded and ready for interaction");
-                
-                idol.addEventListener('click', function(evt) {
-                    // Play click sound effect
-                    try {
-                        if (clickSound) {
-                            clickSound.currentTime = 0;
-                            clickSound.play().catch(err => console.warn("Click sound play error:", err));
-                        }
-                    } catch(e) {
-                        console.warn("Click sound error:", e);
-                    }
-                    
-                    // Activate particle effect
-                    if (particles) {
-                        particles.setAttribute('particle-system', 'enabled', true);
-                        setTimeout(() => {
-                            particles.setAttribute('particle-system', 'enabled', false);
-                        }, 2000);
-                    }
-                    
-                    // Try to play audio if not playing
-                    if (!audioPlaying && audioLoaded) {
-                        toggleAudio();
-                    }
-                });
-            } else {
-                console.error("Model element not found");
-                showError("3D model not found. Please refresh the page.");
+                audioElement.play();
+                audioControl.innerHTML = '<span class="material-icons">pause</span> Pause Mantra';
+                audioPlaying = true;
             }
         });
-    }
+    });
     
-    // Device-specific adjustments
-    function setupDeviceSpecificAdjustments() {
-        function adjustForDevice() {
-            if (idol) {
-                if (window.innerWidth < 768) {
-                    // Mobile positioning
-                    idol.setAttribute('position', '0 0 -2.2');
-                    if (particles) {
-                        particles.setAttribute('position', '0 0 -2.2');
-                    }
-                } else {
-                    // Desktop positioning
-                    idol.setAttribute('position', '0 0 -3');
-                    if (particles) {
-                        particles.setAttribute('position', '0 0 -3');
-                    }
-                }
-            }
+    // Adjust model position for mobile/desktop
+    function adjustForDevice() {
+        const idolModel = document.querySelector('[gltf-model]');
+        if (window.innerWidth < 768) {
+            // Mobile positioning
+            idolModel.setAttribute('position', '0 -0.2 -2');
+        } else {
+            // Desktop positioning
+            idolModel.setAttribute('position', '0 0 -3');
         }
-        
-        // Run once and add event listener for resize
-        window.addEventListener('resize', adjustForDevice);
-        
-        // Wait for scene to be loaded before adjusting
-        scene.addEventListener('loaded', adjustForDevice);
     }
     
-    // Helper functions
-    function showError(message) {
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.textContent = message;
-        document.body.appendChild(errorDiv);
-        errorDiv.style.display = 'block';
-        
-        setTimeout(() => {
-            errorDiv.style.opacity = '0';
-            setTimeout(() => {
-                document.body.removeChild(errorDiv);
-            }, 500);
-        }, 5000);
-    }
+    // Run once and add event listener for resize
+    window.addEventListener('resize', adjustForDevice);
+    scene.addEventListener('loaded', adjustForDevice);
     
-    function showNotification(message) {
-        const notifDiv = document.createElement('div');
-        notifDiv.className = 'notification';
-        notifDiv.textContent = message;
-        document.body.appendChild(notifDiv);
-        notifDiv.style.display = 'block';
-        
-        setTimeout(() => {
-            notifDiv.style.opacity = '0';
-            setTimeout(() => {
-                document.body.removeChild(notifDiv);
-            }, 500);
-        }, 4000);
-    }
+    // Prevent scrolling on mobile
+    document.body.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+    }, { passive: false });
     
-    // Enable default touch behavior for scrolling/zooming but still allow A-Frame interactions
-    document.addEventListener('touchmove', function(e) {
-        // Only prevent default when interacting with A-Frame elements
-        if (e.target.closest('a-scene')) {
-            // Let A-Frame handle its own touch events
-            return;
+    // Add ambient particle effect
+    scene.addEventListener('loaded', () => {
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('a-entity');
+            
+            // Random position around the model
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 2 + Math.random() * 2;
+            const x = Math.cos(angle) * radius;
+            const y = Math.random() * 3 - 0.5;
+            const z = Math.sin(angle) * radius - 3;
+            
+            particle.setAttribute('position', `${x} ${y} ${z}`);
+            particle.setAttribute('geometry', 'primitive: sphere; radius: 0.02');
+            particle.setAttribute('material', 'color: #ffcc66; shader: flat; transparent: true; opacity: 0.6');
+            
+            // Add floating animation
+            particle.setAttribute('animation', {
+                property: 'position',
+                dir: 'alternate',
+                dur: 3000 + Math.random() * 5000,
+                easing: 'easeInOutSine',
+                loop: true,
+                to: `${x} ${y + 0.5 + Math.random()} ${z}`
+            });
+            
+            // Add subtle pulsing animation
+            particle.setAttribute('animation__pulse', {
+                property: 'scale',
+                dir: 'alternate',
+                dur: 2000 + Math.random() * 3000,
+                easing: 'easeInOutSine',
+                loop: true,
+                from: '1 1 1',
+                to: '1.5 1.5 1.5'
+            });
+            
+            scene.appendChild(particle);
         }
-        // Otherwise allow default behavior
-    }, { passive: true });
+    });
 });
