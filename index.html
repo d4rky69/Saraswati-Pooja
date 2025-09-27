@@ -3,46 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Interactive 3D AR experience for Saraswati Pooja celebration">
     <title>Saraswati AR Experience</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
-    
+    <!-- Google Fonts - Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!-- A-Frame for 3D/VR/AR -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <!-- A-Frame Extras for controls -->
     <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
-    <!-- Gesture handler for better mobile experience -->
-    <script src="https://cdn.jsdelivr.net/gh/fcor/arjs-gestures@v0.0.1/dist/gestures.js"></script>
 </head>
 <body>
     <div id="loading-screen">
-        <div class="loader"></div>
-        <p>Loading Experience...</p>
-        <p id="loading-progress">0%</p>
+        <div class="loader">
+            <div class="loader-circle"></div>
+            <div class="loader-circle"></div>
+            <div class="loader-circle"></div>
+        </div>
+        <div class="loading-text">SARASWATI POOJA</div>
+        <div class="loading-progress">Loading Experience...</div>
     </div>
 
-    <div id="instructions" aria-live="polite">
-        <p>Tap the model to interact | Pinch to zoom | Drag to look around</p>
-        <div class="controls">
-            <button id="start-audio" aria-label="Play or pause background audio">Play Audio</button>
-            <div class="volume-control">
-                <label for="volume-slider">Volume:</label>
-                <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.7">
-            </div>
+    <div id="controls">
+        <div class="control-text">
+            <span class="material-icons">touch_app</span>
+            Tap to interact
         </div>
+        <div class="control-text">
+            <span class="material-icons">pinch</span>
+            Pinch to zoom
+        </div>
+        <div class="control-text">
+            <span class="material-icons">pan_tool</span>
+            Drag to look around
+        </div>
+        <button id="audio-control">
+            <span class="material-icons">play_arrow</span>
+            Play Mantra
+        </button>
     </div>
     
-    <a-scene loading-screen="enabled: false" 
-             device-orientation-permission-ui="enabled: true"
-             renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true"
-             vr-mode-ui="enabled: true">
+    <a-scene loading-screen="enabled: false" device-orientation-permission-ui="enabled: true">
         <!-- Assets preloading -->
         <a-assets>
-            <img id="panorama" src="assets/images/mandap-panorama.jpg" crossorigin="anonymous" alt="Mandap panoramic background">
+            <img id="panorama" src="assets/images/mandap-panorama.jpg" crossorigin="anonymous">
             <a-asset-item id="idol-model" src="assets/models/idol.glb"></a-asset-item>
             <audio id="background-audio" src="assets/audio/saraswati-chant.mp3" preload="auto"></audio>
-            <audio id="click-sound" src="assets/audio/click.mp3" preload="auto"></audio>
         </a-assets>
         
         <!-- 360 panorama background -->
@@ -50,35 +57,24 @@
         
         <!-- Saraswati idol model -->
         <a-entity
-            id="idol"
             position="0 0 -3"
             scale="1 1 1"
             gltf-model="#idol-model"
-            animation="property: rotation; to: 0 360 0; loop: true; dur: 30000; easing: linear"
-            animation__click="property: scale; startEvents: click; from: 1 1 1; to: 1.2 1.2 1.2; dur: 200; dir: alternate; easing: easeInOutQuad; loop: 1"
-            class="clickable"
-            gesture-handler="minScale: 0.5; maxScale: 2">
+            animation="property: rotation; to: 0 360 0; loop: true; dur: 30000; easing: linear">
         </a-entity>
         
-        <!-- Particle system for divine effect when model is clicked -->
-        <a-entity id="particles" position="0 0 -3" particle-system="enabled: false; preset: dust; particleCount: 100; color: #ff9933,#ffffff,#138808"></a-entity>
-        
-        <!-- Lighting -->
+        <!-- Ambient light -->
         <a-light type="ambient" color="#fff" intensity="0.7"></a-light>
+        
+        <!-- Directional light -->
         <a-light type="directional" color="#fff" intensity="0.5" position="1 1 1"></a-light>
-        <a-light type="point" color="#ff9933" intensity="0.3" position="0 3 -3"></a-light>
         
         <!-- Camera and controls -->
-        <a-entity camera look-controls="touchEnabled: true; reverseMouseDrag: false" 
-                  wasd-controls="enabled: false" position="0 1.6 0">
+        <a-entity camera look-controls wasd-controls="enabled: false" position="0 1.6 0">
             <a-entity cursor="fuse: false"
                 position="0 0 -1"
                 geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
-                material="color: white; shader: flat"
-                animation__click="property: scale; startEvents: click; from: 0.1 0.1 0.1; to: 1 1 1; dur: 150"
-                animation__fusing="property: scale; startEvents: fusing; from: 1 1 1; to: 0.1 0.1 0.1; dur: 1500"
-                animation__mouseleave="property: scale; startEvents: mouseleave; to: 1 1 1; dur: 500"
-                raycaster="objects: .clickable; far: 10">
+                material="color: white; shader: flat; opacity: 0.8">
             </a-entity>
         </a-entity>
     </a-scene>
